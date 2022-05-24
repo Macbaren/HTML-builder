@@ -42,6 +42,7 @@ fs.readFile(templateHtml, 'utf8', function (err, data) {
     });
   }
 
+  //callback
   function processFile(component, content) {
     data = data.replace(component, content);
 
@@ -62,7 +63,7 @@ const projectDistStyleCss = path.join(projectDist, 'style.css');
 const outStream = fs.createWriteStream(projectDistStyleCss);
 
 // function for copying files and, if directories are found, creating copies of them and recursively traversing
-const readAndCopyDirectory = (dirPath) => {
+const readAndCopyStylesDir = (dirPath) => {
   fs.readdir(dirPath, (err, files) => {
     if (err) {
       return console.log('Unable to scan directory: ' + err);
@@ -81,14 +82,14 @@ const readAndCopyDirectory = (dirPath) => {
           }
           // recursive case
         } else {
-          readAndCopyDirectory(filePath);
+          readAndCopyStylesDir(filePath);
         }
       });
     });
   });
 };
 // cold startup
-readAndCopyDirectory(stylePath);
+readAndCopyStylesDir(stylePath);
 
 //=================== ASSETS ====================
 
@@ -96,9 +97,22 @@ const parentAssetsPath = path.join(__dirname, 'assets');
 
 const projectDistAssets = path.join(projectDist, 'assets');
 
-//create parent copy folder
-fs.mkdir(projectDistAssets, { recursive: true }, (err) => {
-  if (err) throw err;
+// //create parent copy folder
+// fs.mkdir(projectDistAssets, { recursive: true }, (err) => {
+//   if (err) throw err;
+// });
+
+//check is dir exists
+fs.access(projectDistAssets, (err) => {
+  if (err) {
+    //create parent copy folder
+    createDir();
+  } else {
+    fs.rm(projectDistAssets, { recursive: true }, (err) => {
+      if (err) throw err;
+      createDir();
+    });
+  }
 });
 
 // function for copying files and, if directories are found, creating copies of them and recursively traversing
@@ -132,5 +146,13 @@ const readAndCopyAssetsDir = (dirPath) => {
     });
   });
 };
+
+function createDir() {
+  //create parent copy folder
+  fs.mkdir(projectDistAssets, { recursive: true }, (err) => {
+    if (err) throw err;
+    readAndCopyAssetsDir(parentAssetsPath);
+  });
+}
 // cold startup
-readAndCopyAssetsDir(parentAssetsPath);
+// readAndCopyAssetsDir(parentAssetsPath);

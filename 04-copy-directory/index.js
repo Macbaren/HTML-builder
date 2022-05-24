@@ -4,10 +4,17 @@ const fs = require('fs');
 const parentDirPath = path.join(__dirname, 'files');
 const dirPathCopy = path.join(__dirname, 'files-copy');
 
-//create parent copy folder
-fs.mkdir(dirPathCopy, { recursive: true }, (err) => {
-  if (err) throw err;
-  // console.log(`CREATE ${dirPathCopy} is created!`);
+//check is dir exists
+fs.access(dirPathCopy, (err) => {
+  if (err) {
+    //create parent copy folder
+    createDir();
+  } else {
+    fs.rm(dirPathCopy, { recursive: true }, (err) => {
+      if (err) throw err;
+      createDir();
+    });
+  }
 });
 
 // function for copying files and, if directories are found, creating copies of them and recursively traversing
@@ -27,9 +34,6 @@ const readAndCopyDirectory = (dirPath) => {
         if (!stats.isDirectory()) {
           fs.copyFile(filePath, fileCopyPath, (err) => {
             if (err) throw err;
-            // console.log(
-            //   `FIle: <${file}> was copied to files-copy ${fileCopyPath} folder`
-            // );
           }); // recursive case - directory
         } else {
           // create nested folder
@@ -43,5 +47,12 @@ const readAndCopyDirectory = (dirPath) => {
     });
   });
 };
-// cold startup
-readAndCopyDirectory(parentDirPath);
+
+function createDir() {
+  //create parent copy folder
+  fs.mkdir(dirPathCopy, { recursive: true }, (err) => {
+    if (err) throw err;
+    console.log(`CREATE ORIG ${dirPathCopy} is created!`);
+    readAndCopyDirectory(parentDirPath);
+  });
+}
