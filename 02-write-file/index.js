@@ -4,9 +4,15 @@ const { stdout, stdin, stderr, exit } = require('process');
 
 stdout.write('Enter Your Text!\n');
 
+const textFile = path.join(__dirname, 'text.txt');
+
+fs.appendFile(textFile, '', function (err) {
+  if (err) throw err;
+});
+
 // create file and add data or add data to existing file
 function writeToFile(data) {
-  fs.appendFile(path.join(__dirname, 'text.txt'), data, (err) => {
+  fs.appendFile(textFile, data, (err) => {
     if (err) throw err;
   });
 }

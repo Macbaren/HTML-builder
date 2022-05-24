@@ -10,7 +10,7 @@ fs.readdir(directoryPath, (err, files) => {
 
   let ind = 1;
   console.log();
-  console.log('File # | File Name      | File Extenton |       File Size');
+  console.log('File # | File Name      | File Extension |       File Size');
   console.log('==========================================================');
   files.forEach((file, index) => {
     const filePath = path.join(__dirname, 'secret-folder', file);
@@ -19,7 +19,7 @@ fs.readdir(directoryPath, (err, files) => {
         const [fileName, fileExtention] = file.split('.');
         const fileSize = (stats.size / 1028).toFixed(3);
         console.log(
-          `File #${ind}: <${fileName}> \t-     <${fileExtention}>\t-\t<${fileSize}kb>`
+          `File #${ind}: <${fileName}> \t-     <${fileExtention}>\t -\t<${fileSize}kb>`
         );
         if (index === files.length - 1) {
           console.log(
