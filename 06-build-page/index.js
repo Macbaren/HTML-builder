@@ -1,8 +1,6 @@
 const path = require('path');
 const fs = require('fs');
 
-const templateHtml = path.join(__dirname, 'template.html'); //D:\JSprojects\rs\HTML-builder\06-build-page\template.html
-
 const projectDist = path.join(__dirname, 'project-dist');
 
 //create dist folder
@@ -10,26 +8,129 @@ fs.mkdir(projectDist, { recursive: true }, (err) => {
   if (err) throw err;
 });
 
+//=================== HTML ====================
+
+const templateHtml = path.join(__dirname, 'template.html');
+
+const projectDistIndexHtml = path.join(projectDist, 'index.html');
+
+//read content from template
 fs.readFile(templateHtml, 'utf8', function (err, data) {
   if (err) {
     return console.log(err);
   }
 
+  // create content for remove array
   const componentsArr = data.match(/{{.*}}/g);
 
+  // create path of replacing files array
   const componentsPathArr = componentsArr.map((component) => {
     const fileName = `${component.match(/\w+/g)}.html`;
     return path.join(__dirname, 'components', fileName);
   });
 
-  console.log('arrays', componentsArr, componentsPathArr);
+  // replacing
+  for (const component of componentsArr) {
+    const componentPath = componentsPathArr[componentsArr.indexOf(component)];
 
-  data.replace(/{{.+}}/g, (component) => {
-    const result = fs.writeFile(templateHtml, result, 'utf8', function (err) {
-      if (err) return console.log(err);
+    fs.readFile(componentPath, 'utf-8', (err1, data1) => {
+      if (err1) {
+        return console.log(err1);
+      }
+      const content = data1;
+      processFile(component, content);
     });
-    return componentsPathArr[componentsArr.indexOf(component)];
-  });
+  }
+
+  function processFile(component, content) {
+    data = data.replace(component, content);
+
+    fs.writeFile(projectDistIndexHtml, data, (err) => {
+      if (err) {
+        console.error(err);
+      }
+    });
+  }
 });
 
-console.log('please check my work later. I didnt have enough time to finish');
+//=================== CSS ====================
+
+const stylePath = path.join(__dirname, 'styles');
+
+const projectDistStyleCss = path.join(projectDist, 'style.css');
+
+const outStream = fs.createWriteStream(projectDistStyleCss);
+
+// function for copying files and, if directories are found, creating copies of them and recursively traversing
+const readAndCopyDirectory = (dirPath) => {
+  fs.readdir(dirPath, (err, files) => {
+    if (err) {
+      return console.log('Unable to scan directory: ' + err);
+    }
+
+    files.forEach((file) => {
+      const filePath = path.join(dirPath, file);
+      // const fileCopyPath = filePath.replace('files', 'files-copy');
+
+      // checking path is file or directory
+      fs.stat(filePath, (err, stats) => {
+        // base case - file
+        if (!stats.isDirectory()) {
+          if (path.extname(filePath) === '.css') {
+            fs.createReadStream(filePath).pipe(outStream);
+          }
+          // recursive case
+        } else {
+          readAndCopyDirectory(filePath);
+        }
+      });
+    });
+  });
+};
+// cold startup
+readAndCopyDirectory(stylePath);
+
+//=================== ASSETS ====================
+
+const parentAssetsPath = path.join(__dirname, 'assets');
+
+const projectDistAssets = path.join(projectDist, 'assets');
+
+//create parent copy folder
+fs.mkdir(projectDistAssets, { recursive: true }, (err) => {
+  if (err) throw err;
+});
+
+// function for copying files and, if directories are found, creating copies of them and recursively traversing
+const readAndCopyAssetsDir = (dirPath) => {
+  fs.readdir(dirPath, (err, files) => {
+    if (err) {
+      return console.log('Unable to scan directory: ' + err);
+    }
+
+    files.forEach((file) => {
+      const filePath = path.join(dirPath, file);
+
+      const fileCopyPath = filePath.replace('assets', 'project-dist\\assets');
+
+      // checking path is file or directory
+      fs.stat(filePath, (err, stats) => {
+        // base case - file
+        if (!stats.isDirectory()) {
+          fs.copyFile(filePath, fileCopyPath, (err) => {
+            if (err) throw err;
+          }); // recursive case - directory
+        } else {
+          // create nested folder
+          fs.mkdir(fileCopyPath, { recursive: true }, (err) => {
+            if (err) throw err;
+          });
+          //execute recursion
+          readAndCopyAssetsDir(filePath);
+        }
+      });
+    });
+  });
+};
+// cold startup
+readAndCopyAssetsDir(parentAssetsPath);
